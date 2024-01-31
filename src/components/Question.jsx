@@ -12,7 +12,6 @@ const Question = (props) => {
                     >
                         <a className='question--answer-link' href="#"
                            style={{
-                               // background:  (props.correctAnswerId === answer.id) ? '#94D7A2' : (props.incorrectSelectedAnswerId === answer.id) ? '#F8BCBC' : answer.isSelected ? '#D6DBF5' : '',
                                background: (props.buttonClicked && answer.isCorrect)? '#94D7A2' : (props.buttonClicked && !answer.isCorrect && answer.isSelected ) ? '#F8BCBC' :  answer.isSelected ? '#D6DBF5' : '',
 
                            }}
