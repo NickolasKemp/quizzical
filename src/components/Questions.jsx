@@ -1,53 +1,18 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import Question from "./Question";
-import {nanoid} from 'nanoid'
-import {decode} from 'html-entities';
-import axios from 'axios'
 
 
-const Questions = ({questions, setQuestions, answersArrs, setAnswersArrs, questionsAndAnswersArrays, setQuestionsAndAnswersArrays, fetchData}) => {
-
-
-    const [loading, setLoading] = useState(true)
+const Questions = ({
+                       questions, answersArrs, setAnswersArrs,
+                       questionsAndAnswersArrays, fetchData, isLoadedData
+                   }) => {
 
     const [correctAnswersCount, setCorrectAnswersCount] = useState(0)
+
     const [clicked, setClicked] = useState(false)
 
-
-
-
-        // try {
-        //     const response = await axios.get('https://opentdb.com/api.php?amount=5&type=multiple');
-        //     console.log(response.data.results)
-        //     setQuestions(response.data.results)
-        //     setAnswersArrs(getArraysOfAnswers(questions))
-        //     setQuestionsAndAnswersArrays(getQuestionsAndAnswersArrays(questions, answersArrs))
-        // } catch (error) {
-        //     if (error.response && error.response.status === 429) {
-        //         // Retry the request after a delay using exponential backoff
-        //         const delay = Math.pow(2, error.response.headers['retry-after'] || 5) * 100;
-        //         await new Promise(resolve => setTimeout(resolve, delay));
-        //         return fetchData();
-        //     }
-        // }
-
-
-
-    useEffect(() => {
-// fetchData()
-    }, []);
-
-    // console.log(answersArrs)
-
-    // if (loading) {
-    //     return <p>loading...</p>
-    // }
-
-
-
-    // console.log(questionsAndAnswersArrays)
-
     function toggleAnswer(event, answersArrIndex) {
+        event.preventDefault()
         const targetId = event.target.id
 
         setAnswersArrs(answersArrs => {
@@ -71,19 +36,11 @@ const Questions = ({questions, setQuestions, answersArrs, setAnswersArrs, questi
                                 answer
                     ))
                     newAnswersArrs.push(newAnswersArr)
-
                 }
-
-
-
                 return newAnswersArrs
             }
-
         )
-
-
     }
-
 
     function checkAnswers() {
         setClicked(true)
@@ -98,49 +55,49 @@ const Questions = ({questions, setQuestions, answersArrs, setAnswersArrs, questi
                 }
             }
         }
-
-
-
     }
 
     function playAgain() {
         setClicked(false)
         setCorrectAnswersCount(0)
         fetchData()
-
     }
-
 
     return (
         <div className='questions'>
-            <div className="questions--container">
-                <div className="questions--list">
-                    {questionsAndAnswersArrays.map((question, answersArrIndex) =>
-                        <Question
-                            key={question.id}
-                            answersArrIndex={answersArrIndex}
-                            toggleAnswer={toggleAnswer}
-                            question={question.question}
-                            answers={answersArrs[answersArrIndex]}
-                            buttonClicked={clicked}
-                        />
-                    )}
-                </div>
-                <div className="questions--button buttons">
-                    {clicked ?
-                        <div className='buttons--container'>
-                            <p className='questions--score'>You scored {correctAnswersCount}/{questions.length} correct
-                                answers</p>
-                            <button onClick={() => playAgain()}>Play again</button>
-                        </div>
+            {isLoadedData ? <div className="questions--container">
 
-                        :
-                        <button
-                            onClick={checkAnswers}
-                        >Check answers
-                        </button>}
+                    <div className="questions--list">
+                        {questionsAndAnswersArrays.map((question, answersArrIndex) =>
+                            <Question
+                                key={question.id}
+                                answersArrIndex={answersArrIndex}
+                                toggleAnswer={toggleAnswer}
+                                question={question.question}
+                                answers={answersArrs[answersArrIndex]}
+                                buttonClicked={clicked}
+                            />
+                        )
+                        }
+                    </div>
+                    <div className="questions--button buttons">
+                        {clicked ?
+                            <div className='buttons--container'>
+                                <p className='questions--score'>You scored {correctAnswersCount}/{questions.length} correct
+                                    answers</p>
+                                <button onClick={() => playAgain()}>Play again</button>
+                            </div>
+
+                            :
+                            <button
+                                onClick={checkAnswers}
+                            >Check answers
+                            </button>}
+                    </div>
                 </div>
-            </div>
+                :
+                <p>Loading...</p>}
+
         </div>
     );
 };

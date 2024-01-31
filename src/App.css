@@ -121,8 +121,9 @@ button {
 
 .buttons--container {
     display: flex;
-    gap: 10px;
+    gap: 20px;
     height: 50px;
+    align-items: center;
 }
 
 .buttons {

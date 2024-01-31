@@ -6,74 +6,9 @@ import {nanoid} from "nanoid";
 import {decode} from "html-entities";
 import axios from 'axios'
 
-
-//Добавить загрузки при перезагруке вопросов, поскольку они не успевают подгражаться при клике моментально
-//Исправить несоответствие отвотов вопросам (приоритет 2)
-
 function App() {
 
-    const [questions, setQuestions] = React.useState([
-        {
-            "type": "multiple",
-            "difficulty": "medium",
-            "category": "Entertainment: Television",
-            "question": "In Battlestar Galactica (2004), what is the name of the President of the Twelve Colonies?",
-            "correct_answer": "Laura Roslin",
-            "incorrect_answers": [
-                "William Adama",
-                "Tricia Helfer",
-                "Harry Stills"
-            ]
-        },
-        {
-            "type": "multiple",
-            "difficulty": "easy",
-            "category": "Entertainment: Video Games",
-            "question": "In the Nintendo DS game &#039;Ghost Trick: Phantom Detective&#039;, what is the name of the hitman seen at the start of the game?",
-            "correct_answer": "Nearsighted Jeego",
-            "incorrect_answers": [
-                "One Step Ahead Tengo",
-                "Missile",
-                "Cabanela"
-            ]
-        },
-        {
-            "type": "multiple",
-            "difficulty": "medium",
-            "category": "Celebrities",
-            "question": "Nikki Diamond portrayed which Gladiator in the 1992 TV show &quot;Gladiators&quot;?",
-            "correct_answer": "Scorpio",
-            "incorrect_answers": [
-                "Jet",
-                "Nightshade",
-                "Falcon"
-            ]
-        },
-        {
-            "type": "multiple",
-            "difficulty": "hard",
-            "category": "Entertainment: Japanese Anime &amp; Manga",
-            "question": "In the first episode of Yu-Gi-Oh: Duel Monsters, what book is Seto Kaiba seen reading at Domino High School?",
-            "correct_answer": "Thus Spoke Zarathustra",
-            "incorrect_answers": [
-                "Beyond Good and Evil",
-                "The Republic",
-                "Meditations"
-            ]
-        },
-        {
-            "type": "multiple",
-            "difficulty": "medium",
-            "category": "General Knowledge",
-            "question": "What is the currency of Poland?",
-            "correct_answer": "Z\u0142oty",
-            "incorrect_answers": [
-                "Ruble",
-                "Euro",
-                "Krone"
-            ]
-        }
-    ])
+    const [questions, setQuestions] = useState([])
 
     const [startQuiz, setStartQuiz] = useState(false)
 
@@ -95,7 +30,7 @@ function App() {
             const incorrectAnswers = question.incorrect_answers.map((answer) => (
                     {
                         id: nanoid(),
-                        answerName: answer,
+                        answerName: decode(answer),
                         isCorrect: false,
                         isSelected: false,
                         answersArrIndex: index
@@ -105,7 +40,7 @@ function App() {
 
             const correctAnswers = {
                 id: nanoid(),
-                answerName: question.correct_answer,
+                answerName: decode(question.correct_answer),
                 isCorrect: true,
                 isSelected: false,
                 answersArrIndex: index
@@ -132,47 +67,61 @@ function App() {
         return questions.map((question, index) => (
             {
                 question: decode(question.question),
-                answers: answersArrs[index].map(answer => {
-                    return {...answer, answerName: decode(answer.answerName)}
-                }),
+                answers: answersArrs[index],
                 id: nanoid()
             }
         ))
     }
 
-
-    async function fetchData() {
-        console.log('fetching...')
-        const response = await axios.get('https://opentdb.com/api.php?amount=5&type=multiple')
-        console.log('fetched')
-        setQuestions(response.data.results)
-        setAnswersArrs(getArraysOfAnswers(questions))
-        setQuestionsAndAnswersArrays(getQuestionsAndAnswersArrays(questions, answersArrs))
-        console.log(response.data.results)
-        console.log(answersArrs)
-        setIsLoadedData(true)
-        console.log(isLoadedData)
-
-
-    }
+    let canMakeRequest = true
 
     useEffect(() => {
-    }, []);
+        fetchData()
+    }, [])
+
+    useEffect(() => {
+        if (questions.length > 0) {
+            setAnswersArrs(getArraysOfAnswers(questions));
+            setQuestionsAndAnswersArrays(getQuestionsAndAnswersArrays(questions, answersArrs));
+        }
+    }, [questions]);
+
+
+    async function fetchData() {
+        setIsLoadedData(false)
+        try {
+            if (canMakeRequest) {
+                const response = await axios.get('https://opentdb.com/api.php?amount=5&type=multiple')
+                setQuestions(response.data.results)
+                setIsLoadedData(true)
+            } else {
+                console.log('Erorr...')
+            }
+        } catch (error) {
+            if (error.response && error.response.status === 429) {
+                console.log('Too many requests. Wait for a few seconds')
+                setIsLoadedData(false)
+                setTimeout(async () => {
+                    try {
+                        setIsLoadedData(false)
+                        const response = await axios.get('https://opentdb.com/api.php?amount=5&type=multiple')
+                        setQuestions(response.data.results)
+                        setIsLoadedData(true)
+                    } catch (error) {
+                        console.log('Erorr')
+                        setIsLoadedData(true)
+                    }
+                }, 4000)
+            }
+        }
+    }
 
     function startQuizOnClick() {
-        fetchData()
-        setIsLoadedData(true)
-
-        // console.log(isLoadedData)
-
         setStartQuiz(true)
-
-
     }
 
     return (
         <div className="App">
-
             {startQuiz ?
                 <Questions
                     questions={questions}
@@ -183,8 +132,9 @@ function App() {
                     setQuestionsAndAnswersArrays={setQuestionsAndAnswersArrays}
                     fetchData={fetchData}
                     setAnswersArrs={setAnswersArrs}
-
-                /> :
+                    isLoadedData={isLoadedData}
+                />
+                :
                 <Start
                     startQuizOnClick={() => startQuizOnClick()}
                 />}
