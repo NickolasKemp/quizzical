@@ -7,7 +7,6 @@ import {decode} from "html-entities";
 import axios from 'axios'
 
 function App() {
-
     const [questions, setQuestions] = useState([])
 
     const [startQuiz, setStartQuiz] = useState(false)
@@ -62,6 +61,7 @@ function App() {
         }
         return answersObjectsArr
     }
+
 
     function getQuestionsAndAnswersArrays(questions, answersArrs) {
         return questions.map((question, index) => (
